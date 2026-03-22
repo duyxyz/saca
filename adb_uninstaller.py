@@ -1,11 +1,12 @@
 import sys
 import subprocess
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QApplication, QWidget, QLabel, QLineEdit, QListWidget,
-    QPushButton, QVBoxLayout, QHBoxLayout, QMessageBox, QListWidgetItem
+    QPushButton, QVBoxLayout, QHBoxLayout, QMessageBox, QListWidgetItem, QAbstractItemView
 )
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QIcon
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QIcon
+
 
 # Hide console window on Windows
 if sys.platform == "win32":
@@ -23,7 +24,7 @@ class ADBUninstaller(QWidget):
 
         # List widget for showing package list
         self.listwidget = QListWidget()
-        self.listwidget.setSelectionMode(self.listwidget.MultiSelection)
+        self.listwidget.setSelectionMode(QAbstractItemView.SelectionMode.MultiSelection)
 
         # Search box
         self.search_entry = QLineEdit()
@@ -125,9 +126,9 @@ class ADBUninstaller(QWidget):
             self,
             "Confirm",
             f"Are you sure you want to uninstall {len(pkgs)} app(s)?",
-            QMessageBox.Yes | QMessageBox.No
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
         )
-        if reply != QMessageBox.Yes:
+        if reply != QMessageBox.StandardButton.Yes:
             return
 
         ok, fail = 0, 0
@@ -149,4 +150,4 @@ if __name__ == "__main__":
     app.setStyle('windowsvista')
     window = ADBUninstaller()
     window.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
