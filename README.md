@@ -1,38 +1,60 @@
 # ADB App Remover
 
-A simple application to **list** and **uninstall** apps installed on your Android device via ADB (Android Debug Bridge).
+A terminal-based (TUI) application to **list** and **uninstall** apps installed on your Android device via ADB — with **full mouse support**.
 
 ---
-<img width="354" height="545" alt="{97EB9746-61AE-4D6F-B961-52782F9E7DA0}" src="https://github.com/user-attachments/assets/aa2a7647-bc85-4ae8-93b2-1567e7f1ab6e" />
 
 ## Features
 
-- Displays all installed apps on the Android device (user 0).
-- Quick search for app names.
-- Uninstall one or multiple selected apps.
-- User-friendly interface.
-- Packaged as a standalone EXE file.
+- 🖱️ **Mouse-friendly TUI** — click to select, scroll, interact with buttons
+- ⌨️ **Keyboard shortcuts** — `q` quit, `r` refresh, `u` uninstall, `/` search
+- 📋 Displays all installed apps (System + 3rd Party) in two columns
+- 🔍 Real-time search filtering
+- 🗑️ Uninstall one or multiple selected apps with confirmation dialog
+- ✅ Works in any terminal (CMD, PowerShell, Windows Terminal, etc.)
 
 ---
 
 ## Requirements
 
-- Android device with **Developer Options** and **USB Debugging** enabled.
-- ADB installed and configured in your computer's PATH.
-- USB connection between Android device and computer.
+- Python 3.10+
+- Android device with **Developer Options** and **USB Debugging** enabled
+- ADB installed and configured in your computer's PATH
+- USB connection between Android device and computer
 
 ---
 
-## How to Use the EXE File
+## Installation
 
-1. Connect your Android device to the computer via USB and ensure USB Debugging is enabled.
-2. Run the `adb_uninstaller.exe` file (or your EXE file name).
-3. Click the **Refresh** button to load the list of installed apps on your device.
-4. Use the search box to quickly filter apps.
-5. Select one or more apps you want to uninstall.
-6. Click the **Uninstall Selected Apps** button.
-7. Confirm the action when prompted.
-8. View the uninstall status and results on the interface.
+```bash
+pip install -r requirements.txt
+```
+
+## Usage
+
+1. Connect your Android device via USB (USB Debugging enabled)
+2. Run the app:
+
+```bash
+python adb_uninstaller.py
+```
+
+3. **Click** on apps in the table to select/deselect them (✓ mark)
+4. Use the **search box** to filter apps (click or press `/`)
+5. Click **Refresh** to reload the app list
+6. Click **Uninstall Selected** to remove selected apps
+7. Press `q` to quit
+
+---
+
+## Keyboard Shortcuts
+
+| Key | Action |
+|-----|--------|
+| `q` | Quit |
+| `r` | Refresh list |
+| `u` | Uninstall selected |
+| `/` | Focus search box |
 
 ---
 
@@ -47,5 +69,3 @@ A simple application to **list** and **uninstall** apps installed on your Androi
 ## License
 
 This application is released under the MIT License.
-
-

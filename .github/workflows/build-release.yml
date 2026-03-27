@@ -11,7 +11,7 @@ jobs:
   build-and-release:
     runs-on: windows-latest
     permissions:
-      contents: write  # Cấp quyền để tạo GitHub Release
+      contents: write
       pull-requests: read
 
     steps:
@@ -21,7 +21,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.11'
           cache: 'pip'
 
       - name: Install dependencies
@@ -31,18 +31,20 @@ jobs:
 
       - name: Build EXE with PyInstaller
         run: |
-          pyinstaller --noconfirm --onedir --windowed --icon="app_icon.ico" "adb_uninstaller.py"
+          pyinstaller --noconfirm --onefile --console --icon="app_icon.ico" --name "ADB-App-Remover" adb_uninstaller.py
 
       - name: Prepare Release Archive
         run: |
-          copy adb.exe dist\adb_uninstaller\
-          copy AdbWinApi.dll dist\adb_uninstaller\
-          copy AdbWinUsbApi.dll dist\adb_uninstaller\
-          copy fastboot.exe dist\adb_uninstaller\
-          copy app_icon.ico dist\adb_uninstaller\
-          copy README.md dist\adb_uninstaller\
-          copy LICENSE dist\adb_uninstaller\
-          Compress-Archive -Path dist\adb_uninstaller -DestinationPath ADB-App-Remover-Windows.zip
+          mkdir release
+          copy dist\ADB-App-Remover.exe release\
+          copy adb.exe release\
+          copy AdbWinApi.dll release\
+          copy AdbWinUsbApi.dll release\
+          copy fastboot.exe release\
+          copy app_icon.ico release\
+          copy README.md release\
+          copy LICENSE release\
+          Compress-Archive -Path release\* -DestinationPath ADB-App-Remover-Windows.zip
 
       - name: Generate Dynamic Tag
         id: generate_tag
@@ -59,6 +61,14 @@ jobs:
         with:
           tag_name: ${{ env.TAG_NAME }}
           name: Release ${{ env.TAG_NAME }}
+          body: |
+            ## ADB App Remover ${{ env.TAG_NAME }}
+            
+            ### Cách dùng
+            1. Tải file `ADB-App-Remover-Windows.zip` về và giải nén
+            2. Đảm bảo đã cài ADB và thêm vào PATH
+            3. Kết nối điện thoại Android qua USB và bật USB Debugging
+            4. Chạy `ADB-App-Remover.exe`
           files: ADB-App-Remover-Windows.zip
           generate_release_notes: true
         env:

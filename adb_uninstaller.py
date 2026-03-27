@@ -1,189 +1,411 @@
 import sys
 import subprocess
-from PyQt6.QtWidgets import (
-    QApplication, QWidget, QLabel, QLineEdit, QListWidget,
-    QPushButton, QVBoxLayout, QHBoxLayout, QMessageBox, QListWidgetItem, QAbstractItemView
-)
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QIcon
+from textual.app import App, ComposeResult
+from textual.containers import Horizontal, Vertical
+from textual.widgets import Header, Static, Input, Button, DataTable
+from textual.binding import Binding
+from textual.screen import ModalScreen
 
 
-# Hide console window on Windows
-if sys.platform == "win32":
-    import ctypes
-    ctypes.windll.user32.ShowWindow(ctypes.windll.kernel32.GetConsoleWindow(), 0)
+class ConfirmScreen(ModalScreen[bool]):
+    """Simple confirm dialog."""
 
-class ADBUninstaller(QWidget):
+    DEFAULT_CSS = """
+    ConfirmScreen {
+        align: center middle;
+    }
+    #dialog {
+        width: 50;
+        height: auto;
+        border: thick $accent;
+        background: $surface;
+        padding: 1 2;
+    }
+    #dialog Label {
+        width: 100%;
+        text-align: center;
+        margin-bottom: 1;
+    }
+    #dialog-buttons {
+        width: 100%;
+        align: center middle;
+        height: auto;
+    }
+    #dialog-buttons Button {
+        margin: 0 1;
+    }
+    """
+
+    def __init__(self, msg: str) -> None:
+        super().__init__()
+        self.msg = msg
+
+    def compose(self) -> ComposeResult:
+        from textual.widgets import Label
+        with Vertical(id="dialog"):
+            yield Label(self.msg)
+            with Horizontal(id="dialog-buttons"):
+                yield Button("Yes", variant="error", id="yes")
+                yield Button("No", variant="primary", id="no")
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        self.dismiss(event.button.id == "yes")
+
+
+class ResultScreen(ModalScreen):
+    """Simple result dialog."""
+
+    DEFAULT_CSS = """
+    ResultScreen {
+        align: center middle;
+    }
+    #result-diag {
+        width: 40;
+        height: auto;
+        border: thick $accent;
+        background: $surface;
+        padding: 1 2;
+    }
+    #result-diag Label {
+        width: 100%;
+        text-align: center;
+        margin-bottom: 1;
+    }
+    #result-ok {
+        width: 100%;
+        align: center middle;
+    }
+    """
+
+    def __init__(self, msg: str) -> None:
+        super().__init__()
+        self.msg = msg
+
+    def compose(self) -> ComposeResult:
+        from textual.widgets import Label
+        with Vertical(id="result-diag"):
+            yield Label(self.msg)
+            with Horizontal(id="result-ok"):
+                yield Button("OK", variant="primary", id="ok")
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        self.dismiss()
+
+
+class ADBUninstaller(App):
+    """ADB App Remover — TUI"""
+
+    TITLE = "ADB App Remover"
+
+    CSS = """
+    Screen {
+        background: #1e1e2e;
+    }
+
+    Header {
+        background: #6c5b9e;
+        color: #e0def4;
+    }
+
+    #info-bar {
+        height: 1;
+        background: #302d41;
+        color: #c4b7d5;
+        padding: 0 1;
+        layout: horizontal;
+    }
+
+    #info-left {
+        width: 1fr;
+    }
+
+    #info-right {
+        width: auto;
+    }
+
+    #tables {
+        height: 1fr;
+        margin-bottom: 0;
+    }
+
+    .col {
+        width: 1fr;
+        border: solid #45405e;
+        background: #1e1e2e;
+    }
+
+    .col:focus, .col:focus-within {
+        border: solid #45405e;
+        background: #1e1e2e;
+    }
+
+    .col-title {
+        background: #6c5b9e;
+        color: #e0def4;
+        text-align: center;
+        text-style: bold;
+        height: 1;
+        padding: 0 1;
+    }
+
+    DataTable {
+        height: 1fr;
+        background: #1e1e2e;
+        scrollbar-background: #1e1e2e;
+        scrollbar-background-hover: #1e1e2e;
+        scrollbar-background-active: #1e1e2e;
+        scrollbar-color: #4c3a7a;
+        scrollbar-color-hover: #5d4a96;
+        scrollbar-color-active: #7c6faa;
+        border: none;
+    }
+
+    DataTable:focus {
+        border: none;
+        background: #1e1e2e;
+    }
+
+    DataTable > .datatable--header {
+        background: #45405e;
+        color: #c4b7d5;
+        text-style: bold;
+    }
+
+    DataTable > .datatable--cursor {
+        background: #3a3650;
+        color: #ffffff;
+        text-style: bold;
+    }
+
+    DataTable > .datatable--hover {
+        background: #2a2a3e;
+    }
+
+    ScrollBar {
+        background: #1e1e2e;
+        color: #4c3a7a;
+    }
+
+    ScrollBar > .scrollbar--highlight {
+        color: #5d4a96;
+        background: #1e1e2e;
+    }
+
+    ScrollBar > .scrollbar--grabbed {
+        color: #7c6faa;
+        background: #1e1e2e;
+    }
+
+    #bottom-bar {
+        height: 3;
+        padding: 0 1;
+        margin-bottom: 1;
+        background: #1e1e2e;
+    }
+
+    #search {
+        width: 1fr;
+        margin-right: 1;
+        background: #302d41;
+        color: #e0def4;
+        border: tall #45405e;
+    }
+
+    Button.-primary {
+        background: #6c5b9e;
+        color: #e0def4;
+    }
+
+    Button.-error {
+        background: #8b3a62;
+        color: #e0def4;
+    }
+
+    #status-bar {
+        height: 1;
+        background: #302d41;
+        color: #c4b7d5;
+        padding: 0 1;
+        layout: horizontal;
+        margin-top: 0;
+    }
+
+    #status {
+        width: 1fr;
+    }
+
+    #key-hints {
+        width: auto;
+    }
+
+    Footer {
+        display: none;
+    }
+    """
+
+    BINDINGS = [
+        Binding("q", "quit", "Quit", show=False),
+        Binding("r", "refresh", "Refresh", show=False),
+        Binding("u", "uninstall", "Uninstall", show=False),
+    ]
+
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("ADB App Uninstaller")
-        self.resize(700, 520)
-        self.setWindowIcon(QIcon("app_icon.ico"))
+        self.sys_packages: list[str] = []
+        self.user_packages: list[str] = []
+        self.selected_sys: set[str] = set()
+        self.selected_user: set[str] = set()
+        self._info_left_text: str = ""
 
-        self.sys_packages = []
-        self.user_packages = []
+    def compose(self) -> ComposeResult:
+        yield Header()
+        with Horizontal(id="info-bar"):
+            yield Static("System: 0 | 3rd Party: 0 | Total: 0", id="info-left")
+            yield Static("", id="info-right")
+        with Horizontal(id="tables"):
+            v1 = Vertical(classes="col")
+            v1.can_focus = False
+            with v1:
+                yield Static("System Apps", classes="col-title")
+                yield DataTable(id="t-sys", cursor_type="row", show_header=False)
+            
+            v2 = Vertical(classes="col")
+            v2.can_focus = False
+            with v2:
+                yield Static("3rd Party Apps", classes="col-title")
+                yield DataTable(id="t-user", cursor_type="row", show_header=False)
+                
+        with Horizontal(id="bottom-bar"):
+            yield Input(placeholder="Search...", id="search")
+            yield Button("Refresh", variant="primary", id="btn-r")
+            yield Button("Uninstall", variant="error", id="btn-u")
+        with Horizontal(id="status-bar"):
+            yield Static("Waiting...", id="status")
+            yield Static("[b][white][u]Q[/u][/white][/b] Quit  [b][white][u]R[/u][/white][/b] Refresh  [b][white][u]U[/u][/white][/b] Uninstall", id="key-hints")
 
-        # List widgets for showing package list
-        self.list_sys = QListWidget()
-        self.list_sys.setSelectionMode(QAbstractItemView.SelectionMode.MultiSelection)
-        self.list_user = QListWidget()
-        self.list_user.setSelectionMode(QAbstractItemView.SelectionMode.MultiSelection)
+    def on_mount(self) -> None:
+        for tid in ("t-sys", "t-user"):
+            t = self.query_one(f"#{tid}", DataTable)
+            t.add_column("✓", key="sel", width=3)
+            t.add_column("Package", key="pkg")
+        self.load_packages()
 
-        lbl_sys = QLabel("System Apps")
-        lbl_user = QLabel("3rd Party Apps")
+    def _run_adb(self, args: list[str]) -> subprocess.CompletedProcess:
+        si = None
+        if sys.platform == "win32":
+            si = subprocess.STARTUPINFO()
+            si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        return subprocess.run(args, capture_output=True, text=True, startupinfo=si)
 
-        vbox_sys = QVBoxLayout()
-        vbox_sys.addWidget(lbl_sys)
-        vbox_sys.addWidget(self.list_sys)
-
-        vbox_user = QVBoxLayout()
-        vbox_user.addWidget(lbl_user)
-        vbox_user.addWidget(self.list_user)
-
-        lists_layout = QHBoxLayout()
-        lists_layout.addLayout(vbox_sys)
-        lists_layout.addLayout(vbox_user)
-
-        # Search box
-        self.search_entry = QLineEdit()
-        self.search_entry.setPlaceholderText("Search apps...")
-        self.search_entry.textChanged.connect(self.search_package)
-
-        # Buttons layout
-        btn_layout = QHBoxLayout()
-        self.btn_refresh = QPushButton("Refresh")
-        self.btn_refresh.clicked.connect(self.refresh_list)
-        self.btn_uninstall = QPushButton("Uninstall Selected")
-        self.btn_uninstall.clicked.connect(self.uninstall_selected)
-
-        btn_layout.addWidget(self.btn_refresh)
-        btn_layout.addWidget(self.btn_uninstall)
-
-        # Status label
-        self.status_label = QLabel("Waiting for action...")
-        self.status_label.setStyleSheet("color: blue;")
-
-        # Main layout
-        main_layout = QVBoxLayout()
-        main_layout.addLayout(lists_layout)
-        main_layout.addWidget(self.search_entry)
-        main_layout.addLayout(btn_layout)
-        main_layout.addWidget(self.status_label)
-
-        self.setLayout(main_layout)
-
-        # Load package list at start
-        self.refresh_list()
-
-    def get_installed_packages(self):
+    def get_packages(self):
         try:
-            # Fetch System Apps
-            cmd_sys = ["adb", "shell", "pm", "list", "packages", "-s", "--user", "0"]
-            startupinfo = subprocess.STARTUPINFO()
-            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-            result_sys = subprocess.run(cmd_sys, capture_output=True, text=True, startupinfo=startupinfo)
-            if result_sys.returncode != 0:
-                return [], [], "ADB not running or device not connected!"
-            lines_sys = result_sys.stdout.strip().split('\n')
-            sys_pkgs = [line.replace("package:", "").strip() for line in lines_sys if line]
+            r1 = self._run_adb(["adb", "shell", "pm", "list", "packages", "-s", "--user", "0"])
+            if r1.returncode != 0:
+                return [], [], "ADB error or device not connected"
+            sys_p = sorted(l.replace("package:", "").strip() for l in r1.stdout.strip().split("\n") if l.strip())
 
-            # Fetch 3rd Party Apps
-            cmd_user = ["adb", "shell", "pm", "list", "packages", "-3", "--user", "0"]
-            result_user = subprocess.run(cmd_user, capture_output=True, text=True, startupinfo=startupinfo)
-            lines_user = result_user.stdout.strip().split('\n')
-            user_pkgs = [line.replace("package:", "").strip() for line in lines_user if line]
-
-            return sys_pkgs, user_pkgs, ""
+            r2 = self._run_adb(["adb", "shell", "pm", "list", "packages", "-3", "--user", "0"])
+            usr_p = sorted(l.replace("package:", "").strip() for l in r2.stdout.strip().split("\n") if l.strip())
+            return sys_p, usr_p, ""
         except Exception as e:
-            return [], [], f"Error: {str(e)}"
+            return [], [], str(e)
 
-    def uninstall_package(self, pkg):
-        cmd = ["adb", "shell", "pm", "uninstall", "-k", "--user", "0", pkg]
-        startupinfo = subprocess.STARTUPINFO()
-        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-        result = subprocess.run(cmd, capture_output=True, text=True, startupinfo=startupinfo)
-        output = result.stdout.strip()
-        if "Success" in output:
-            return True, f"Successfully uninstalled: {pkg}"
-        else:
-            return False, f"Failed to uninstall: {pkg} - {output}"
+    def uninstall_pkg(self, pkg: str) -> tuple[bool, str]:
+        r = self._run_adb(["adb", "shell", "pm", "uninstall", "-k", "--user", "0", pkg])
+        return ("Success" in r.stdout, r.stdout.strip())
 
-    def refresh_list(self):
-        self.status_label.setText("Loading package list...")
-        QApplication.processEvents()  # Update UI
+    def status(self, txt: str):
+        self.query_one("#status", Static).update(txt)
 
-        sys_pkgs, user_pkgs, err = self.get_installed_packages()
+    def info(self, left: str, right: str = ""):
+        self._info_left_text = left
+        self.query_one("#info-left", Static).update(left)
+        self.query_one("#info-right", Static).update(right)
+
+    def fill_table(self, tid: str, pkgs: list[str]):
+        t = self.query_one(f"#{tid}", DataTable)
+        sel = self.selected_sys if tid == "t-sys" else self.selected_user
+        t.clear()
+        for p in pkgs:
+            t.add_row("✓" if p in sel else " ", p, key=p)
+
+    def load_packages(self):
+        self.status("Loading...")
+        self.selected_sys.clear()
+        self.selected_user.clear()
+        s, u, err = self.get_packages()
         if err:
-            QMessageBox.critical(self, "Error", err)
-            self.status_label.setText(err)
+            self.status(err)
             self.sys_packages, self.user_packages = [], []
-            self.list_sys.clear()
-            self.list_user.clear()
+            self.fill_table("t-sys", [])
+            self.fill_table("t-user", [])
             return
+        self.sys_packages, self.user_packages = s, u
+        self.fill_table("t-sys", s)
+        self.fill_table("t-user", u)
+        self.info(f"System: {len(s)}  |  3rd Party: {len(u)}  |  Total: {len(s)+len(u)}", "")
+        self.status("Ready")
 
-        self.sys_packages = sorted(sys_pkgs)
-        self.user_packages = sorted(user_pkgs)
-        self.update_lists(self.sys_packages, self.user_packages)
-        self.status_label.setText(f"Loaded {len(sys_pkgs)} system apps and {len(user_pkgs)} 3rd-party apps.")
+    def apply_filter(self, kw: str):
+        kw = kw.strip().lower()
+        fs = [p for p in self.sys_packages if kw in p.lower()] if kw else self.sys_packages
+        fu = [p for p in self.user_packages if kw in p.lower()] if kw else self.user_packages
+        self.fill_table("t-sys", fs)
+        self.fill_table("t-user", fu)
 
-    def update_lists(self, sys_list, user_list):
-        self.list_sys.clear()
-        for pkg in sys_list:
-            self.list_sys.addItem(QListWidgetItem(pkg))
-            
-        self.list_user.clear()
-        for pkg in user_list:
-            self.list_user.addItem(QListWidgetItem(pkg))
-
-    def search_package(self):
-        keyword = self.search_entry.text().strip().lower()
-        if not self.sys_packages and not self.user_packages:
+    def on_data_table_row_selected(self, ev: DataTable.RowSelected):
+        t = ev.data_table
+        key = ev.row_key.value
+        if not key:
             return
-            
-        if keyword == "":
-            self.update_lists(self.sys_packages, self.user_packages)
+        sel = self.selected_sys if t.id == "t-sys" else self.selected_user
+        if key in sel:
+            sel.discard(key)
+            t.update_cell(ev.row_key, "sel", " ")
         else:
-            filtered_sys = [pkg for pkg in self.sys_packages if keyword in pkg.lower()]
-            filtered_user = [pkg for pkg in self.user_packages if keyword in pkg.lower()]
-            self.update_lists(filtered_sys, filtered_user)
+            sel.add(key)
+            t.update_cell(ev.row_key, "sel", "✓")
+        n = len(self.selected_sys) + len(self.selected_user)
+        self.status(f"{n} selected" if n else "Ready")
 
-    def uninstall_selected(self):
-        selected_sys = self.list_sys.selectedItems()
-        selected_user = self.list_user.selectedItems()
-        
-        all_selected = selected_sys + selected_user
-        if not all_selected:
-            QMessageBox.warning(self, "No Selection", "Please select apps to uninstall.")
+    def on_input_changed(self, ev: Input.Changed):
+        if ev.input.id == "search":
+            self.apply_filter(ev.value)
+
+    def on_button_pressed(self, ev: Button.Pressed):
+        if ev.button.id == "btn-r":
+            self.action_refresh()
+        elif ev.button.id == "btn-u":
+            self.action_uninstall()
+
+    def action_refresh(self):
+        self.query_one("#search", Input).value = ""
+        self.load_packages()
+
+    def action_uninstall(self):
+        pkgs = list(self.selected_sys | self.selected_user)
+        if not pkgs:
+            self.status("Nothing selected")
             return
-            
-        pkgs = [item.text() for item in all_selected]
 
-        reply = QMessageBox.question(
-            self,
-            "Confirm",
-            f"Are you sure you want to uninstall {len(pkgs)} app(s)?",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
-        )
-        if reply != QMessageBox.StandardButton.Yes:
-            return
+        def on_confirm(yes: bool):
+            if not yes:
+                return
+            ok = fail = 0
+            for p in pkgs:
+                self.status(f"Removing {p}...")
+                s, _ = self.uninstall_pkg(p)
+                if s:
+                    ok += 1
+                else:
+                    fail += 1
+            self.load_packages()
+            res_right = f"[green]\u2713 {ok} removed[/] | [red]\u2717 {fail} failed[/]"
+            self.query_one("#info-right", Static).update(res_right)
+            self.status(f"Done: {ok} removed, {fail} failed")
 
-        ok, fail = 0, 0
-        for pkg in pkgs:
-            success, msg = self.uninstall_package(pkg)
-            if success:
-                ok += 1
-            else:
-                fail += 1
-            self.status_label.setText(msg)
-            QApplication.processEvents()
-
-        QMessageBox.information(self, "Result", f"Success: {ok}\nFailed: {fail}")
-        self.refresh_list()
+        self.push_screen(ConfirmScreen(f"Uninstall {len(pkgs)} app(s)?"), on_confirm)
 
 
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    app.setStyle('windowsvista')
-    window = ADBUninstaller()
-    window.show()
-    sys.exit(app.exec())
+    ADBUninstaller().run()
