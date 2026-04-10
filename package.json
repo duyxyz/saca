@@ -1,0 +1,43 @@
+{
+  "name": "adb-app-remove",
+  "version": "1.0.0",
+  "description": "Interactive CLI tool to list and uninstall Android apps via ADB",
+  "type": "module",
+  "bin": {
+    "adb-app-remove": "./bin/cli.js"
+  },
+  "files": [
+    "bin/",
+    "lib/",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "start": "node bin/cli.js"
+  },
+  "keywords": [
+    "adb",
+    "android",
+    "uninstall",
+    "cli",
+    "debloat"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@inquirer/checkbox": "^4.0.2",
+    "@inquirer/confirm": "^5.1.6",
+    "blessed": "^0.1.81",
+    "boxen": "^8.0.1",
+    "chalk": "^5.4.1",
+    "gradient-string": "^3.0.0",
+    "ora": "^8.2.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/duyxyz/ADB.App.Remove.git"
+  }
+}

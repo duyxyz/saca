@@ -1,51 +1,80 @@
-# ADB App Remover
+# ADB App Remove
 
-A simple application to **list** and **uninstall** apps installed on your Android device via ADB (Android Debug Bridge).
-
----
-<img width="354" height="545" alt="{97EB9746-61AE-4D6F-B961-52782F9E7DA0}" src="https://github.com/user-attachments/assets/aa2a7647-bc85-4ae8-93b2-1567e7f1ab6e" />
-
-## Features
-
-- Displays all installed apps on the Android device (user 0).
-- Quick search for app names.
-- Uninstall one or multiple selected apps.
-- User-friendly interface.
-- Packaged as a standalone EXE file.
+Interactive **CLI tool** to list and uninstall Android apps via ADB — runnable with a single `npx` command, no installation required.
 
 ---
 
-## Requirements
+## ✨ Features
 
-- Android device with **Developer Options** and **USB Debugging** enabled.
-- ADB installed and configured in your computer's PATH.
-- USB connection between Android device and computer.
-
----
-
-## How to Use the EXE File
-
-1. Connect your Android device to the computer via USB and ensure USB Debugging is enabled.
-2. Run the `adb_uninstaller.exe` file (or your EXE file name).
-3. Click the **Refresh** button to load the list of installed apps on your device.
-4. Use the search box to quickly filter apps.
-5. Select one or more apps you want to uninstall.
-6. Click the **Uninstall Selected Apps** button.
-7. Confirm the action when prompted.
-8. View the uninstall status and results on the interface.
+- ⚡ Zero-install: run directly with `npx`
+- 📋 Lists **System Apps** and **3rd Party Apps** in separate groups
+- 🔍 Type to **search/filter** inside the selector
+- ☑️ **Multi-select** — choose multiple apps at once
+- ✅ Confirmation prompt before uninstalling
+- 📊 Summary of success/failed results
+- 🎨 Colorful, readable terminal output
 
 ---
 
-## Notes
+## 🚀 Quick Start
 
-- Make sure your device is connected and ADB is working properly.
-- Be careful when uninstalling system or critical apps.
-- The application is not responsible for uninstalling the wrong apps.
+> **Requires:** Node.js ≥ 18, ADB in PATH, USB Debugging enabled on device.
+
+```bash
+npx adb-app-remove
+```
+
+Or run from this repo without publishing:
+
+```bash
+npx github:duyxyz/ADB.App.Remove
+```
+
+---
+
+## 💻 Usage
+
+```
+ ╔═══════════════════════════════╗
+ ║   📱  ADB App Remove  v1.0    ║
+ ╚═══════════════════════════════╝
+  Uninstall Android apps via ADB
+
+✔ Device connected!
+✔ Packages loaded: 142 system  67 3rd party
+
+  ↑↓ Navigate  •  Space: Select  •  Type to search  •  Enter: Confirm
+
+? Select apps to uninstall: (Use arrow keys)
+  ─── System Apps (142) ───
+ ❯ ○ com.android.calculator2
+   ○ com.android.camera2
+   ...
+  ─── 3rd Party Apps (67) ───
+   ○ com.facebook.katana
+   ...
+```
+
+---
+
+## 📦 Local Development
+
+```bash
+git clone https://github.com/duyxyz/ADB.App.Remove
+cd ADB.App.Remove
+npm install
+npx .
+```
+
+---
+
+## ⚠️ Notes
+
+- Uninstall uses `pm uninstall -k --user 0` — apps are **disabled for user 0** only, not fully removed from the system partition.
+- Be careful when removing system-critical apps.
 
 ---
 
 ## License
 
-This application is released under the MIT License.
-
-
+MIT

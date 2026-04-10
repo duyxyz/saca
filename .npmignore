@@ -1,0 +1,15 @@
+# Python files
+*.py
+requirements.txt
+
+# Windows ADB binaries (users should have their own ADB)
+*.exe
+*.dll
+
+# Other assets
+app_icon.ico
+*.ico
+
+# Dev & git
+.github/
+.git/
