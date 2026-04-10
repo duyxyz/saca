@@ -10,7 +10,10 @@
     "bin/",
     "lib/",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "adb.exe",
+    "AdbWinApi.dll",
+    "AdbWinUsbApi.dll"
   ],
   "scripts": {
     "start": "node bin/cli.js"
