@@ -6,15 +6,14 @@
 
 ## 🚀 Get Started
 
-Run instantly without installation:
+Run instantly with npx:
 ```bash
 npx saca
 ```
 
-Or install globally for permanent access:
+Install globally with npm:
 ```bash
 npm install -g saca
-saca
 ```
 
 ---
