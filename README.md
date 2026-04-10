@@ -1,18 +1,18 @@
 # SACA (System Adb Cleaner Assistant)
 
-Interactive CLI tool to list and uninstall Android apps via ADB. Super fast, full-screen TUI.gle `npx` command, no installation required.
+Interactive CLI tool to list and uninstall Android apps via ADB. Super fast, full-screen TUI runnable with a single `npx` command.
 
 ---
 
 ## ✨ Features
 
-- ⚡ Zero-install: run directly with `npx`
-- 📋 Lists **System Apps** and **3rd Party Apps** in separate groups
-- 🔍 Type to **search/filter** inside the selector
-- ☑️ **Multi-select** — choose multiple apps at once
-- ✅ Confirmation prompt before uninstalling
-- 📊 Summary of success/failed results
-- 🎨 Colorful, readable terminal output
+- ⚡ **Zero-install**: run directly with `npx saca`
+- 🖥️ **Full-screen TUI**: Responsive terminal interface with split panes
+- 📋 **Grouped View**: System Apps and User Apps in side-by-side columns
+- 🔍 **Fast Search**: Type any character to filter the list instantly
+- ☑️ **Multi-select**: Toggle multiple apps with `Space` and review before purge
+- 🔄 **Auto-Refresh**: Automatically reloads device state after uninstallation
+- 🎨 **Modern Aesthetics**: Bullet points, markers, and curated colors
 
 ---
 
@@ -20,48 +20,36 @@ Interactive CLI tool to list and uninstall Android apps via ADB. Super fast, ful
 
 > **Requires:** Node.js ≥ 18, ADB in PATH, USB Debugging enabled on device.
 
+Run directly via NPM:
+
 ```bash
-npx adb-app-remove
+npx saca
 ```
 
-Or run from this repo without publishing:
+Or run directly from the GitHub repository:
 
 ```bash
-npx github:duyxyz/ADB.App.Remove
+npx github:duyxyz/saca
 ```
 
 ---
 
-## 💻 Usage
+## ⌨️ Controls
 
-```
- ╔═══════════════════════════════╗
- ║   📱  ADB App Remove  v1.0    ║
- ╚═══════════════════════════════╝
-  Uninstall Android apps via ADB
-
-✔ Device connected!
-✔ Packages loaded: 142 system  67 3rd party
-
-  ↑↓ Navigate  •  Space: Select  •  Type to search  •  Enter: Confirm
-
-? Select apps to uninstall: (Use arrow keys)
-  ─── System Apps (142) ───
- ❯ ○ com.android.calculator2
-   ○ com.android.camera2
-   ...
-  ─── 3rd Party Apps (67) ───
-   ○ com.facebook.katana
-   ...
-```
+- **Up/Down Arrows**: Navigate the active list
+- **Left/Right Arrows / Tab**: Switch between System and User panes
+- **Space**: Toggle selection of the current app
+- **Enter**: Proceed to review screen / Confirm uninstallation
+- **Esc**: Clear the current search filter / Go back
+- **Ctrl + Q**: Quit the application
 
 ---
 
 ## 📦 Local Development
 
 ```bash
-git clone https://github.com/duyxyz/ADB.App.Remove
-cd ADB.App.Remove
+git clone https://github.com/duyxyz/saca
+cd saca
 npm install
 npx .
 ```
@@ -70,7 +58,7 @@ npx .
 
 ## ⚠️ Notes
 
-- Uninstall uses `pm uninstall -k --user 0` — apps are **disabled for user 0** only, not fully removed from the system partition.
+- Uninstall uses `pm uninstall -k --user 0` — apps are **disabled for user 0** only, ensuring safety while effectively debloating.
 - Be careful when removing system-critical apps.
 
 ---

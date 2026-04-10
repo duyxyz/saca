@@ -38,6 +38,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/duyxyz/ADB.App.Remove.git"
+    "url": "https://github.com/duyxyz/saca.git"
+  },
+  "homepage": "https://github.com/duyxyz/saca#readme",
+  "bugs": {
+    "url": "https://github.com/duyxyz/saca/issues"
   }
 }
