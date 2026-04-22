@@ -16,9 +16,6 @@ npm install -g github:duyxyz/saca
 ```
 
 
-<img width="1909" height="992" alt="image" src="https://github.com/user-attachments/assets/5189aaab-4196-4e3b-be92-6a20a0510187" />
-
----
 ## Controls
 
 - **Arrows / Tab**: Navigate & Switch Panes
@@ -27,7 +24,7 @@ npm install -g github:duyxyz/saca
 - **Esc**: Clear Filter / Back
 - **Ctrl + Q**: Quit
 
----
+
 
 ##  Requirements
 - **Node.js** ≥ 18
