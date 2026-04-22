@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import readline from 'readline';
-import { checkAdb, getPackages, uninstallPackage } from '../lib/adb.js';
+import { checkAdb, getPackages, uninstallPackage, getDeviceSummary } from '../lib/adb.js';
 import {
   state,
   filterItems,
@@ -42,6 +42,35 @@ setListHeightResolver(getListHeight);
 
 let isInteractive = Boolean(process.stdin.isTTY && process.stdout.isTTY);
 let rawModeEnabled = false;
+let lastSummary = '';
+
+async function pollDeviceStatus() {
+  if (!state.running || state.screen === 'running' || state.screen === 'loading') return;
+
+  const devices = getDeviceSummary();
+  const currentSummary = devices.length > 0 ? devices[0] : '';
+
+  if (currentSummary !== lastSummary) {
+    const isNewConnection = !lastSummary && currentSummary;
+    lastSummary = currentSummary;
+
+    if (!currentSummary) {
+      state.screen = 'error';
+      state.error = 'Device disconnected.\nConnect a device to continue.';
+      state.device = null;
+      render();
+    } else if (isNewConnection || (state.device && state.device.serial !== currentSummary.split(':')[0])) {
+      try {
+        state.device = checkAdb();
+        await refreshList();
+      } catch (error) {
+        state.screen = 'error';
+        state.error = error.message;
+        render();
+      }
+    }
+  }
+}
 
 function enterAltScreen() {
   if (!isInteractive) return;
@@ -244,6 +273,8 @@ async function bootstrap() {
   render();
   try {
     state.device = checkAdb();
+    lastSummary = `${state.device.serial}:${state.device.state}`;
+    setInterval(pollDeviceStatus, 2000);
   } catch (error) {
     state.screen = 'error';
     state.error = error.message;
