@@ -1,6 +1,6 @@
 {
   "name": "@duyxyz/saca",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Interactive CLI tool to list and uninstall Android apps via ADB",
   "type": "module",
   "bin": {
