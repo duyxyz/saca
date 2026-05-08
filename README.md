@@ -15,6 +15,11 @@ Install globally with npm
 npm install -g @duyxyz/saca
 ```
 
+Uninstall global package
+```bash
+npm uninstall -g @duyxyz/saca
+```
+
 
 ## Controls
 
