@@ -1,0 +1,52 @@
+name: Publish NPM Package
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Clone repo
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Setup Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: "https://registry.npmjs.org"
+
+      # Install dependencies
+      - name: Install dependencies
+        run: npm install
+
+      # Configure Git
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+      # Auto bump version
+      - name: Bump version
+        run: |
+          npm version patch -m "chore: release v%s"
+
+      # Push updated version back to GitHub
+      - name: Push changes
+        run: |
+          git push
+          git push --tags
+
+      # Publish package to npm
+      - name: Publish to NPM
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
