@@ -7,12 +7,12 @@
 
 Run instantly with npx
 ```bash
-npx github:duyxyz/saca
+npx @duyxyz/saca
 ```
 
 Install globally with npm
 ```bash
-npm install -g github:duyxyz/saca
+npm install -g @duyxyz/saca
 ```
 
 
