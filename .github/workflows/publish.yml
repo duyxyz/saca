@@ -1,9 +1,7 @@
 name: Publish NPM Package
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -17,7 +15,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Setup Node.js
+      # Setup Node
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -34,19 +32,19 @@ jobs:
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
 
-      # Auto bump version
+      # Auto increase version
       - name: Bump version
         run: |
-          npm version patch -m "chore: release v%s"
+          npm version patch -m "release: v%s"
 
-      # Push updated version back to GitHub
+      # Push new version
       - name: Push changes
         run: |
           git push
           git push --tags
 
-      # Publish package to npm
-      - name: Publish to NPM
+      # Publish to npm
+      - name: Publish package
         run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
