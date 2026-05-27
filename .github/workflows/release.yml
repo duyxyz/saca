@@ -6,11 +6,16 @@ on:
       - 'v*'
   workflow_dispatch:
     inputs:
-      tag_name:
-        description: 'Tag name for the release (e.g. v1.0.4). If empty, will use version from package.json.'
-        required: false
-        default: ''
-        type: string
+      version_type:
+        description: 'Version bump type (patch, minor, major, or none)'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+          - none
 
 permissions:
   contents: write
@@ -22,6 +27,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -31,6 +38,38 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+      - name: Bump version & Create Git Tag
+        id: version_bump
+        run: |
+          if [ "${{ github.event.inputs.version_type }}" != "" ] && [ "${{ github.event.inputs.version_type }}" != "none" ]; then
+            # Bump package version and create git tag
+            npm version ${{ github.event.inputs.version_type }} -m "release: v%s"
+            git push origin main
+            git push origin --tags
+            
+            # Determine the tag that was created
+            VERSION=$(node -e "console.log(JSON.parse(require('fs').readFileSync('./package.json')).version)")
+            echo "tag=v$VERSION" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          else
+            # Fallback: get current version from package.json and ensure tag exists on remote
+            VERSION=$(node -e "console.log(JSON.parse(require('fs').readFileSync('./package.json')).version)")
+            TAG="v$VERSION"
+            echo "tag=$TAG" >> $GITHUB_OUTPUT
+            
+            # Check if tag exists on remote, if not, create and push it
+            if ! git rev-parse "$TAG" >/dev/null 2>&1; then
+              git tag "$TAG"
+              git push origin "$TAG"
+            fi
+          fi
 
       - name: Build standalone binaries
         run: npm run build
@@ -46,22 +85,10 @@ jobs:
           # Package Linux tarball
           tar -czvf saca-linux-x64.tar.gz -C dist saca-linux
 
-      - name: Determine tag name
-        id: get_tag
-        run: |
-          if [ "${{ github.event.inputs.tag_name }}" != "" ]; then
-            echo "tag=${{ github.event.inputs.tag_name }}" >> $GITHUB_OUTPUT
-          elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
-            echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
-          else
-            VERSION=$(node -e "console.log(JSON.parse(require('fs').readFileSync('./package.json')).version)")
-            echo "tag=v$VERSION" >> $GITHUB_OUTPUT
-          fi
-
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.get_tag.outputs.tag }}
+          tag_name: ${{ steps.version_bump.outputs.tag }}
           files: |
             saca-windows-x64.zip
             saca-macos-x64.tar.gz
