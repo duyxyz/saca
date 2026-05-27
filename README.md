@@ -22,16 +22,18 @@ Download the binary from [Releases](https://github.com/duyxyz/saca/releases), ex
 
 ---
 
-## Node.js & npm Alternative
+## Node.js & npm Alternative (Run via GitHub)
+
+If you have Node.js installed, you can run or install SACA directly from GitHub:
 
 ### Run instantly (No install)
 ```bash
-npx @duyxyz/saca
+npx github:duyxyz/saca
 ```
 
 ### Install globally
 ```bash
-npm install -g @duyxyz/saca
+npm install -g duyxyz/saca
 ```
 
 ### Uninstall
@@ -53,9 +55,5 @@ npm uninstall -g @duyxyz/saca
 
 ## Requirements
 - **USB Debugging** enabled on your Android device.
-- **Standalone Version**: ADB is bundled automatically (No setup required).
-- **npm Version**: Requires Node.js ≥ 18 and ADB installed in PATH.
-
-
-
-
+- **Standalone Version**: ADB is pre-bundled (no separate installation required).
+- **npm Version**: Requires Node.js ≥ 18 and ADB installed in your system PATH.
