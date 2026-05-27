@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import readline from 'readline';
-import { checkAdb, getPackages, uninstallPackage, getDeviceSummary } from '../lib/adb.js';
+import { checkAdb, getPackages, uninstallPackage, getDeviceSummary, killAdbServer } from '../lib/adb.js';
 import {
   state,
   filterItems,
@@ -93,6 +93,7 @@ function cleanupAndExit(code = 0) {
     }
     leaveAltScreen();
   }
+  killAdbServer();
   process.exit(code);
 }
 
