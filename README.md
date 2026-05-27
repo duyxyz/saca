@@ -5,10 +5,17 @@
 ## Quick Install (No Node.js)
 
 ### Windows
+
+#### Install
 ```powershell
 irm https://raw.githubusercontent.com/duyxyz/saca/main/install.ps1 | iex
 ```
 *Once installed, restart your terminal and run `saca`.*
+
+#### Uninstall
+```powershell
+Remove-Item -Path "$env:USERPROFILE\.saca" -Recurse -Force; [Environment]::SetEnvironmentVariable("PATH", ([Environment]::GetEnvironmentVariable("PATH", "User") -split ';' | Where-Object { $_ -ne "$env:USERPROFILE\.saca" }) -join ';', "User")
+```
 
 ### macOS & Linux
 Download the binary from [Releases](https://github.com/duyxyz/saca/releases), extract and run.
@@ -17,12 +24,19 @@ Download the binary from [Releases](https://github.com/duyxyz/saca/releases), ex
 
 ## Node.js & npm Alternative
 
+### Run instantly (No install)
 ```bash
-# Run instantly
 npx @duyxyz/saca
+```
 
-# Install globally
+### Install globally
+```bash
 npm install -g @duyxyz/saca
+```
+
+### Uninstall
+```bash
+npm uninstall -g @duyxyz/saca
 ```
 
 ---
