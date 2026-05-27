@@ -1,45 +1,37 @@
 # SACA (System Adb Cleaner Assistant)
 
-**SACA** is a full-screen TUI tool to quickly uninstall Android bloatware via ADB.
+Full-screen TUI tool to quickly uninstall Android bloatware via ADB.
 
-## Quick Install (No Node.js)
+## Installation
 
-### Windows
+### Windows (No Node.js)
 
-#### Install
-```powershell
-irm https://raw.githubusercontent.com/duyxyz/saca/main/install.ps1 | iex
-```
-*Once installed, restart your terminal and run `saca`.*
+*   **Install:**
+    ```powershell
+    irm https://raw.githubusercontent.com/duyxyz/saca/main/install.ps1 | iex
+    ```
+*   **Uninstall:**
+    ```powershell
+    Remove-Item -Path "$env:USERPROFILE\.saca" -Recurse -Force; [Environment]::SetEnvironmentVariable("PATH", ([Environment]::GetEnvironmentVariable("PATH", "User") -split ';' | Where-Object { $_ -ne "$env:USERPROFILE\.saca" }) -join ';', "User")
+    ```
 
-#### Uninstall
-```powershell
-Remove-Item -Path "$env:USERPROFILE\.saca" -Recurse -Force; [Environment]::SetEnvironmentVariable("PATH", ([Environment]::GetEnvironmentVariable("PATH", "User") -split ';' | Where-Object { $_ -ne "$env:USERPROFILE\.saca" }) -join ';', "User")
-```
+### macOS & Linux (No Node.js)
+Download and extract from [Releases](https://github.com/duyxyz/saca/releases).
 
-### macOS & Linux
-Download the binary from [Releases](https://github.com/duyxyz/saca/releases), extract and run.
+### Via Node.js / npm (Direct from GitHub)
 
----
-
-## Node.js & npm Alternative (Run via GitHub)
-
-If you have Node.js installed, you can run or install SACA directly from GitHub:
-
-### Run instantly (No install)
-```bash
-npx github:duyxyz/saca
-```
-
-### Install globally
-```bash
-npm install -g duyxyz/saca
-```
-
-### Uninstall
-```bash
-npm uninstall -g @duyxyz/saca
-```
+*   **Run without install:**
+    ```bash
+    npx github:duyxyz/saca
+    ```
+*   **Install globally:**
+    ```bash
+    npm install -g duyxyz/saca
+    ```
+*   **Uninstall:**
+    ```bash
+    npm uninstall -g @duyxyz/saca
+    ```
 
 ---
 
@@ -54,6 +46,7 @@ npm uninstall -g @duyxyz/saca
 ---
 
 ## Requirements
+
 - **USB Debugging** enabled on your Android device.
-- **Standalone Version**: ADB is pre-bundled (no separate installation required).
-- **npm Version**: Requires Node.js ≥ 18 and ADB installed in your system PATH.
+- **Standalone Version**: ADB is bundled automatically (no setup required on Windows).
+- **npm Version**: Requires Node.js ≥ 18 and ADB installed in system PATH.
