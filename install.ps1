@@ -49,6 +49,11 @@ try {
 # 5. Extract files
 Write-Host "📦 Extracting SACA..." -ForegroundColor Gray
 try {
+    # Terminate any running adb or saca processes to release Windows file locks
+    Stop-Process -Name "adb" -Force -ErrorAction SilentlyContinue
+    Stop-Process -Name "saca" -Force -ErrorAction SilentlyContinue
+    Start-Sleep -Milliseconds 300
+
     Expand-Archive -Path $zipFile -DestinationPath $installDir -Force
     Remove-Item -Path $zipFile -Force
     
