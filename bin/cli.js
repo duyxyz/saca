@@ -215,9 +215,17 @@ function onKeypress(str, key) {
     return;
   }
   if (isKeyMatch(key, input, 'escape', [KEY.ESC])) {
+    let changed = false;
     if (state.query) {
       state.query = '';
       filterItems();
+      changed = true;
+    }
+    if (state.selected.size > 0) {
+      state.selected.clear();
+      changed = true;
+    }
+    if (changed) {
       render();
     }
     return;
