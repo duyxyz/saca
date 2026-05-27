@@ -5,6 +5,12 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Tag name for the release (e.g. v1.0.4). If empty, will use version from package.json.'
+        required: false
+        default: ''
+        type: string
 
 permissions:
   contents: write
@@ -40,9 +46,22 @@ jobs:
           # Package Linux tarball
           tar -czvf saca-linux-x64.tar.gz -C dist saca-linux
 
+      - name: Determine tag name
+        id: get_tag
+        run: |
+          if [ "${{ github.event.inputs.tag_name }}" != "" ]; then
+            echo "tag=${{ github.event.inputs.tag_name }}" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          else
+            VERSION=$(node -e "console.log(JSON.parse(require('fs').readFileSync('./package.json')).version)")
+            echo "tag=v$VERSION" >> $GITHUB_OUTPUT
+          fi
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.get_tag.outputs.tag }}
           files: |
             saca-windows-x64.zip
             saca-macos-x64.tar.gz
