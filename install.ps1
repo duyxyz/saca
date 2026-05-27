@@ -49,10 +49,39 @@ try {
 # 5. Extract files
 Write-Host "📦 Extracting SACA..." -ForegroundColor Gray
 try {
-    # Terminate any running adb or saca processes to release Windows file locks
-    Stop-Process -Name "adb" -Force -ErrorAction SilentlyContinue
-    Stop-Process -Name "saca" -Force -ErrorAction SilentlyContinue
-    Start-Sleep -Milliseconds 300
+    # 1. Kill any running adb or saca processes aggressively
+    try {
+        Stop-Process -Name "adb" -Force -ErrorAction SilentlyContinue
+        Stop-Process -Name "saca" -Force -ErrorAction SilentlyContinue
+        taskkill /f /im adb.exe 2>$null | Out-Null
+        taskkill /f /im saca.exe 2>$null | Out-Null
+    } catch {}
+    Start-Sleep -Seconds 1
+
+    # 2. Rename locked adb.exe if it's still locked to free up the path for extraction
+    $adbExe = "$installDir\adb.exe"
+    if (Test-Path $adbExe) {
+        try {
+            Remove-Item -Path $adbExe -Force -ErrorAction Stop
+        } catch {
+            $rand = Get-Random
+            Rename-Item -Path $adbExe -NewName "adb.exe.old-$rand" -ErrorAction SilentlyContinue
+        }
+    }
+
+    # 3. Rename locked saca.exe if it's still locked
+    $sacaExe = "$installDir\saca.exe"
+    if (Test-Path $sacaExe) {
+        try {
+            Remove-Item -Path $sacaExe -Force -ErrorAction Stop
+        } catch {
+            $rand = Get-Random
+            Rename-Item -Path $sacaExe -NewName "saca.exe.old-$rand" -ErrorAction SilentlyContinue
+        }
+    }
+
+    # 4. Clean up any leftover old files from previous updates that are now unlocked
+    Get-ChildItem -Path $installDir -Filter "*.old-*" -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
 
     Expand-Archive -Path $zipFile -DestinationPath $installDir -Force
     Remove-Item -Path $zipFile -Force
