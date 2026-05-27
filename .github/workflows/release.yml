@@ -1,0 +1,53 @@
+name: Build & Release Standalone Binaries
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build standalone binaries
+        run: npm run build
+
+      - name: Create release archives
+        run: |
+          # Package Windows zip (including adb.exe and required DLLs)
+          zip -j saca-windows-x64.zip dist/saca-win.exe adb.exe AdbWinApi.dll AdbWinUsbApi.dll
+          
+          # Package macOS tarball
+          tar -czvf saca-macos-x64.tar.gz -C dist saca-macos
+          
+          # Package Linux tarball
+          tar -czvf saca-linux-x64.tar.gz -C dist saca-linux
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            saca-windows-x64.zip
+            saca-macos-x64.tar.gz
+            saca-linux-x64.tar.gz
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

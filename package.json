@@ -16,7 +16,10 @@
     "AdbWinUsbApi.dll"
   ],
   "scripts": {
-    "start": "node bin/cli.js"
+    "start": "node bin/cli.js",
+    "bundle": "esbuild bin/cli.js --bundle --platform=node --target=node18 --outfile=dist/saca.cjs --format=cjs",
+    "package": "pkg dist/saca.cjs --targets node18-win-x64,node18-macos-x64,node18-linux-x64 --out-path dist",
+    "build": "npm run bundle && npm run package"
   },
   "keywords": [
     "adb",
@@ -35,6 +38,10 @@
     "chalk": "^5.4.1",
     "gradient-string": "^3.0.0",
     "ora": "^8.2.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.20.2",
+    "pkg": "^5.8.1"
   },
   "engines": {
     "node": ">=18.0.0"
