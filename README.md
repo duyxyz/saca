@@ -1,42 +1,28 @@
 # SACA (System Adb Cleaner Assistant)
 
-**SACA** is a high-performance, full-screen TUI tool to quickly uninstall Android bloatware via ADB.
+**SACA** is a full-screen TUI tool to quickly uninstall Android bloatware via ADB.
 
----
+## Quick Install (No Node.js)
 
-## Quick Install (No Node.js Required)
-
-### Windows (Recommended)
-Open **PowerShell** and run this single command to install SACA along with all required ADB binaries automatically:
+### Windows
 ```powershell
 irm https://raw.githubusercontent.com/duyxyz/saca/main/install.ps1 | iex
 ```
-*Once installed, open a new terminal and simply type `saca` to run!*
+*Once installed, restart your terminal and run `saca`.*
 
 ### macOS & Linux
-1. Go to the [Releases](https://github.com/duyxyz/saca/releases) page.
-2. Download the compressed archive for your platform (`saca-macos-x64.tar.gz` or `saca-linux-x64.tar.gz`).
-3. Extract the archive and execute the `saca` binary directly from your terminal!
+Download the binary from [Releases](https://github.com/duyxyz/saca/releases), extract and run.
 
 ---
 
-## Run with Node.js & npm (Alternative)
+## Node.js & npm Alternative
 
-If you already have Node.js installed, you can use the traditional npm commands:
-
-### Run instantly with npx
 ```bash
+# Run instantly
 npx @duyxyz/saca
-```
 
-### Install globally
-```bash
+# Install globally
 npm install -g @duyxyz/saca
-```
-
-### Uninstall global package
-```bash
-npm uninstall -g @duyxyz/saca
 ```
 
 ---
@@ -45,16 +31,17 @@ npm uninstall -g @duyxyz/saca
 
 - **Arrows / Tab**: Navigate & Switch Panes
 - **Space**: Select Apps
-- **Enter**: Uninstall selected apps
+- **Enter**: Uninstall Selected
 - **Esc**: Clear Filter / Back
 - **Ctrl + Q**: Quit
 
 ---
 
 ## Requirements
-* **USB Debugging** enabled on your Android device.
-* **For Standalone Version**: No additional software needed! ADB is bundled automatically.
-* **For npm Version**: Requires **Node.js** ≥ 18 and **ADB** installed globally in your system PATH.
+- **USB Debugging** enabled on your Android device.
+- **Standalone Version**: ADB is bundled automatically (No setup required).
+- **npm Version**: Requires Node.js ≥ 18 and ADB installed in PATH.
+
 
 
 
