@@ -130,22 +130,7 @@ export default function Home() {
 
   // Helper to execute shell command and read stdout
   const runAdbCommand = async (adb, cmd) => {
-    const process = await adb.subprocess.shell(cmd);
-    const reader = process.stdout.getReader();
-    const chunks = [];
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      chunks.push(value);
-    }
-    const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
-    const combined = new Uint8Array(totalLength);
-    let offset = 0;
-    for (const chunk of chunks) {
-      combined.set(chunk, offset);
-      offset += chunk.length;
-    }
-    return new TextDecoder().decode(combined);
+    return await adb.subprocess.noneProtocol.spawnWaitText(cmd);
   };
 
   const loadPackages = async (adbInstance) => {
@@ -227,9 +212,12 @@ export default function Home() {
       let errMsg = e.message || 'Make sure USB debugging is enabled and you accept the RSA authentication prompt on the device screen.';
       let errTitle = 'Authentication Failed';
       
-      if (e.message && (e.message.toLowerCase().includes('already in use') || e.message.toLowerCase().includes('claiminterface') || e.name === 'NetworkError')) {
+      if (e.message && (e.message.toLowerCase().includes('in use') || e.message.toLowerCase().includes('in used') || e.message.toLowerCase().includes('claiminterface') || e.name === 'NetworkError')) {
         errTitle = 'Device Already in Use';
         errMsg = 'The device USB port is currently claimed by another program (such as the local adb.exe server running on your PC, Android Studio, or another browser tab). Please open your Terminal/Command Prompt, run "adb kill-server" to release the port, unplug and replug your USB cable, and click Connect Device again.';
+      } else if (e.message && (e.message.toLowerCase().includes('cancelled') || e.message.toLowerCase().includes('cancel') || e.message.toLowerCase().includes('transferin') || e.message.toLowerCase().includes('transferout'))) {
+        errTitle = 'USB Connection Cancelled';
+        errMsg = 'The USB transfer was cancelled. This happens if you tap "Cancel" on the phone\'s "Allow USB Debugging" screen, if the USB cable is loose/unstable, or if you take too long to authorize. Please unplug/replug your cable, unlock your phone, and try Connect Device again.';
       }
       
       showConnectionError(errTitle, errMsg);
