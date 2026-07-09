@@ -10,10 +10,11 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const [pane, setPane] = useState('loading'); // 'loading', 'alert', 'app-list'
   const [alertInfo, setAlertInfo] = useState({ title: '', message: '' });
-  const [loadingText, setLoadingText] = useState('Scanning for ADB devices...');
+  const [loadingText, setLoadingText] = useState('Initializing WebUSB...');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [systemScrolled, setSystemScrolled] = useState(false);
   const [userScrolled, setUserScrolled] = useState(false);
+  const [webUsbSupported, setWebUsbSupported] = useState(true);
 
   // Modals state
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -30,48 +31,63 @@ export default function Home() {
 
   const searchInputRef = useRef(null);
   const consoleLogRef = useRef(null);
-  const eventSourceRef = useRef(null);
+  const adbRef = useRef(null);
 
-  // Keep device ref updated to avoid stale closure in polling loop
+  // Keep device ref updated to avoid stale closure in events
   const deviceRef = useRef(device);
   useEffect(() => {
     deviceRef.current = device;
   }, [device]);
 
-  // Initial load and background polling loop
+  // Initial load and connection scanner
   useEffect(() => {
-    refreshAll(true);
+    const isSupported = typeof window !== 'undefined' && !!(navigator && navigator.usb);
+    setWebUsbSupported(isSupported);
 
-    const interval = setInterval(async () => {
-      try {
-        const response = await fetch('/api/device');
-        const data = await response.json();
-        
-        const wasConnected = !!deviceRef.current;
-        const isConnected = data.success;
-        const serialChanged = wasConnected && isConnected && deviceRef.current.serial !== data.device.serial;
-        
-        if (!wasConnected && isConnected) {
-          setDevice(data.device);
-          refreshAll(false);
-        } else if (wasConnected && !isConnected) {
+    if (isSupported) {
+      const scanDevices = async () => {
+        try {
+          const { AdbDaemonWebUsbDeviceManager } = await import('@yume-chan/adb-daemon-webusb');
+          const pairedDevices = await AdbDaemonWebUsbDeviceManager.BROWSER.getDevices();
+          if (pairedDevices.length > 0) {
+            logConsole('Auto-reconnecting to paired device...', 'info');
+            await connectToDevice(pairedDevices[0]);
+          } else {
+            setPane('alert');
+            setAlertInfo({
+              title: 'Connect Android Device',
+              message: 'Please connect your device via USB cable, enable USB Debugging, then click Connect Device.'
+            });
+          }
+        } catch (e) {
+          console.error('Scan paired devices failed', e);
+          showConnectionError('Scan Failed', 'Could not scan for connected USB devices.');
+        }
+      };
+      scanDevices();
+
+      // Listen for browser device disconnections
+      const handleDisconnect = (event) => {
+        if (deviceRef.current && event.device.serialNumber === deviceRef.current.serial) {
           setDevice(null);
           setPackages({ system: [], user: [] });
           setSelectedPackages(new Set());
-          showConnectionError('Device Disconnected', 'Please re-connect your Android device via USB.');
-        } else if (serialChanged) {
-          setDevice(data.device);
-          refreshAll(false);
+          adbRef.current = null;
+          showConnectionError('Device Disconnected', 'USB connection to your device was lost.');
         }
-      } catch (e) {
-        console.warn('Failed to poll device status', e);
-      }
-    }, 5000);
+      };
 
-    return () => {
-      clearInterval(interval);
-      if (eventSourceRef.current) eventSourceRef.current.close();
-    };
+      navigator.usb.addEventListener('disconnect', handleDisconnect);
+      return () => {
+        navigator.usb.removeEventListener('disconnect', handleDisconnect);
+      };
+    } else {
+      setPane('alert');
+      setAlertInfo({
+        title: 'Browser Not Supported',
+        message: 'Your current browser does not support WebUSB. Please switch to Google Chrome, Microsoft Edge, Opera, or Brave.'
+      });
+    }
   }, []);
 
   // Global hotkeys handler
@@ -112,41 +128,44 @@ export default function Home() {
     setPane('alert');
   };
 
-  const refreshAll = async (showLoading = true) => {
-    if (showLoading) {
-      setPane('loading');
-      setLoadingText('Scanning for ADB devices...');
+  // Helper to execute shell command and read stdout
+  const runAdbCommand = async (adb, cmd) => {
+    const process = await adb.subprocess.shell(cmd);
+    const reader = process.stdout.getReader();
+    const chunks = [];
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      chunks.push(value);
     }
-    setIsRefreshing(true);
+    const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
+    const combined = new Uint8Array(totalLength);
+    let offset = 0;
+    for (const chunk of chunks) {
+      combined.set(chunk, offset);
+      offset += chunk.length;
+    }
+    return new TextDecoder().decode(combined);
+  };
 
+  const loadPackages = async (adbInstance) => {
     try {
-      const deviceResponse = await fetch('/api/device');
-      const deviceData = await deviceResponse.json();
+      setLoadingText('Loading system packages...');
+      const sysRaw = await runAdbCommand(adbInstance, 'pm list packages -s --user 0');
+      
+      setLoadingText('Loading user packages...');
+      const userRaw = await runAdbCommand(adbInstance, 'pm list packages -3 --user 0');
 
-      if (!deviceData.success) {
-        setDevice(null);
-        showConnectionError('No Device Found', deviceData.error || 'Ensure your device is connected with USB Debugging enabled.');
-        setIsRefreshing(false);
-        return;
-      }
+      const parse = (raw) =>
+        raw
+          .split(/[\r\n]+/)
+          .map(l => l.replace('package:', '').trim())
+          .filter(Boolean)
+          .sort();
 
-      setDevice(deviceData.device);
+      const sysPkgs = parse(sysRaw);
+      const userPkgs = parse(userRaw);
 
-      if (showLoading) {
-        setLoadingText('Loading installed packages from device...');
-      }
-
-      const pkgsResponse = await fetch('/api/packages');
-      const pkgsData = await pkgsResponse.json();
-
-      if (!pkgsData.success) {
-        showConnectionError('Failed to Load Packages', pkgsData.error || 'An error occurred while loading application list.');
-        setIsRefreshing(false);
-        return;
-      }
-
-      const sysPkgs = pkgsData.sysPackages || [];
-      const userPkgs = pkgsData.userPackages || [];
       setPackages({ system: sysPkgs, user: userPkgs });
 
       // Clean selected packages that no longer exist
@@ -163,7 +182,81 @@ export default function Home() {
 
       setPane('app-list');
     } catch (e) {
-      showConnectionError('Connection Error', 'Could not communicate with the local SACA backend API.');
+      console.error('Failed to load packages', e);
+      showConnectionError('Load Failed', 'Could not read package list from device.');
+    }
+  };
+
+  const connectToDevice = async (usbDevice) => {
+    setPane('loading');
+    setLoadingText('Connecting and authenticating with device...');
+    try {
+      const { Adb } = await import('@yume-chan/adb');
+      const { AdbDaemonTransport } = await import('@yume-chan/adb');
+      const { default: AdbWebCredentialStore } = await import('@yume-chan/adb-credential-web');
+
+      const connection = await usbDevice.connect();
+      const credentialStore = new AdbWebCredentialStore();
+      
+      // Perform authentication handshake
+      const transport = await AdbDaemonTransport.authenticate({
+        serial: usbDevice.serial,
+        connection: connection,
+        credentialStore: credentialStore,
+      });
+
+      const adb = new Adb(transport);
+      adbRef.current = adb;
+
+      // Fetch device info
+      const brandRaw = await runAdbCommand(adb, 'getprop ro.product.brand');
+      const modelRaw = await runAdbCommand(adb, 'getprop ro.product.model');
+      const releaseRaw = await runAdbCommand(adb, 'getprop ro.build.version.release');
+
+      setDevice({
+        brand: brandRaw.trim(),
+        model: modelRaw.trim(),
+        androidVersion: releaseRaw.trim(),
+        serial: usbDevice.serial
+      });
+
+      // Fetch package lists
+      await loadPackages(adb);
+    } catch (e) {
+      console.error('Connection failed', e);
+      showConnectionError('Authentication Failed', e.message || 'Make sure USB debugging is enabled and you accept the RSA authentication prompt on the device screen.');
+    }
+  };
+
+  const handleConnectClick = async () => {
+    try {
+      const { AdbDaemonWebUsbDeviceManager } = await import('@yume-chan/adb-daemon-webusb');
+      const usbDevice = await AdbDaemonWebUsbDeviceManager.BROWSER.requestDevice();
+      if (usbDevice) {
+        await connectToDevice(usbDevice);
+      }
+    } catch (e) {
+      console.error('Device pairing cancelled', e);
+    }
+  };
+
+  const refreshAll = async (showLoading = true) => {
+    if (!adbRef.current) {
+      await handleConnectClick();
+      return;
+    }
+
+    if (showLoading) {
+      setPane('loading');
+      setLoadingText('Refreshing package lists...');
+    }
+    setIsRefreshing(true);
+
+    try {
+      await loadPackages(adbRef.current);
+    } catch (e) {
+      console.error('Refresh packages failed', e);
+      showConnectionError('Refresh Failed', 'Communication with the device was lost.');
     } finally {
       setIsRefreshing(false);
     }
@@ -206,20 +299,18 @@ export default function Home() {
     return pkgName;
   };
 
-
   // Log to progress console
   const logConsole = (message, type = 'info') => {
     setConsoleLog(prev => [...prev, { text: message, type }]);
   };
 
-  // Progress modal done
   const handleProgressDone = () => {
     setIsProgressOpen(false);
-    refreshAll(false); // Reload package lists
+    refreshAll(false);
   };
 
-  // Perform SSE uninstallation
-  const startUninstallation = () => {
+  // Client-side WebUSB uninstallation sequence
+  const startUninstallation = async () => {
     setIsConfirmOpen(false);
     
     const targetPackages = Array.from(selectedPackages);
@@ -228,71 +319,74 @@ export default function Home() {
     // Reset progress state
     setProgressTitle('Uninstalling Packages...');
     setProgressPercent(0);
-    setProgressStatus('Starting connection...');
+    setProgressStatus('Initializing WebUSB...');
     setSuccessCount(0);
     setFailCount(0);
-    setConsoleLog([{ text: 'Establishing connection to ADB server...', type: 'info' }]);
+    setConsoleLog([{ text: 'Establishing secure communication...', type: 'info' }]);
     setIsProgressDone(false);
     setIsProgressOpen(true);
 
-    const packagesParam = encodeURIComponent(JSON.stringify(targetPackages));
-    const sseUrl = `/api/uninstall?packages=${packagesParam}`;
-    
-    const eventSource = new EventSource(sseUrl);
-    eventSourceRef.current = eventSource;
-
-    eventSource.addEventListener('start', (e) => {
-      const data = JSON.parse(e.data);
-      logConsole(`Target: Uninstalling ${data.total} packages.`, 'info');
-      setProgressStatus(`Starting removal of ${data.total} packages...`);
-    });
-
-    eventSource.addEventListener('progress', (e) => {
-      const data = JSON.parse(e.data);
-      const percent = Math.round((data.index / data.total) * 100);
-      setProgressPercent(percent);
-
-      if (data.status === 'uninstalling') {
-        setProgressStatus(`Uninstalling: ${data.package} (${data.index}/${data.total})`);
-      } else if (data.status === 'success') {
-        logConsole(`[✓] SUCCESS: ${data.package}`, 'success');
-        setSuccessCount(prev => prev + 1);
-      } else if (data.status === 'fail') {
-        logConsole(`[✗] FAILED:  ${data.package}${data.error ? ` (${data.error})` : ''}`, 'error');
-        setFailCount(prev => prev + 1);
-      }
-    });
-
-    eventSource.addEventListener('complete', (e) => {
-      const data = JSON.parse(e.data);
-      logConsole(`\n========================================`, 'info');
-      logConsole(`UNINSTALLATION COMPLETE`, 'info');
-      logConsole(`Total Packages: ${data.total}`, 'info');
-      logConsole(`Succeeded:      ${data.successCount}`, 'success');
-      logConsole(`Failed:         ${data.failCount}`, data.failCount > 0 ? 'error' : 'info');
-      logConsole(`========================================`, 'info');
-
-      setProgressStatus('Removal complete!');
-      setProgressTitle('Uninstallation Complete');
+    const adb = adbRef.current;
+    if (!adb) {
+      logConsole('Error: Device is no longer connected.', 'error');
+      setProgressStatus('Failed: Device disconnected.');
       setIsProgressDone(true);
-      setSelectedPackages(new Set());
-      eventSource.close();
-    });
+      return;
+    }
 
-    eventSource.addEventListener('error', (e) => {
-      logConsole('\n[!] Connection lost or error occurred.', 'error');
-      if (e.data) {
-        try {
-          const errorData = JSON.parse(e.data);
-          logConsole(`Error details: ${errorData.message}`, 'error');
-        } catch (err) {}
+    logConsole(`Target: Uninstalling/disabling ${targetPackages.length} packages.`, 'info');
+    setProgressStatus(`Removing ${targetPackages.length} packages...`);
+
+    let completed = 0;
+    let localSuccess = 0;
+    let localFail = 0;
+
+    for (const pkg of targetPackages) {
+      setProgressStatus(`Uninstalling: ${pkg} (${completed + 1}/${targetPackages.length})`);
+      logConsole(`Processing ${pkg}...`, 'info');
+      try {
+        const result = await runAdbCommand(adb, `pm uninstall --user 0 ${pkg}`);
+        if (result.toLowerCase().includes('success')) {
+          logConsole(`[✓] SUCCESS: ${pkg}`, 'success');
+          localSuccess++;
+          setSuccessCount(localSuccess);
+        } else {
+          // Try disabling as fallback
+          logConsole(`[!] Uninstall failed, trying to disable: ${pkg}`, 'info');
+          const disableResult = await runAdbCommand(adb, `pm disable-user --user 0 ${pkg}`);
+          if (disableResult.toLowerCase().includes('new state')) {
+            logConsole(`[✓] SUCCESS (Disabled): ${pkg}`, 'success');
+            localSuccess++;
+            setSuccessCount(localSuccess);
+          } else {
+            const errReason = result.trim() || disableResult.trim() || 'Unknown error';
+            logConsole(`[✗] FAILED:  ${pkg} (${errReason})`, 'error');
+            localFail++;
+            setFailCount(localFail);
+          }
+        }
+      } catch (err) {
+        logConsole(`[✗] ERROR:  ${pkg} (${err.message})`, 'error');
+        localFail++;
+        setFailCount(localFail);
       }
-      setProgressStatus('Process halted due to connection error.');
-      setIsProgressDone(true);
-      eventSource.close();
-    });
+      
+      completed++;
+      setProgressPercent(Math.round((completed / targetPackages.length) * 100));
+    }
+
+    logConsole(`\n========================================`, 'info');
+    logConsole(`UNINSTALLATION COMPLETE`, 'info');
+    logConsole(`Total Packages: ${targetPackages.length}`, 'info');
+    logConsole(`Succeeded:      ${localSuccess}`, 'success');
+    logConsole(`Failed:         ${localFail}`, localFail > 0 ? 'error' : 'info');
+    logConsole(`========================================`, 'info');
+
+    setProgressStatus('Removal complete!');
+    setProgressTitle('Uninstallation Complete');
+    setIsProgressDone(true);
+    setSelectedPackages(new Set());
   };
-
 
   // Circular progress ring parameters
   const radius = 50;
@@ -312,7 +406,7 @@ export default function Home() {
             <span className="pulse-dot"></span>
             <span className="status-text">{device ? 'Connected' : 'No Device'}</span>
           </div>
-          {device && (
+          {device ? (
             <div className="device-details">
               <span className="device-name">{`${device.brand || ''} ${device.model || ''}`.trim() || 'Unknown'}</span>
               <span className="separator">|</span>
@@ -320,14 +414,22 @@ export default function Home() {
               <span className="separator">|</span>
               <span className="device-serial">{device.serial}</span>
             </div>
+          ) : (
+            webUsbSupported && (
+              <button className="btn btn-primary" onClick={handleConnectClick} style={{ marginLeft: '12px', padding: '4px 10px', fontSize: '12px' }}>
+                Connect Device
+              </button>
+            )
           )}
-          <button 
-            className={`btn-icon ${isRefreshing ? 'spinning' : ''}`} 
-            onClick={() => refreshAll(true)}
-            title="Refresh connection and package lists"
-          >
-            <RefreshCw size={16} />
-          </button>
+          {device && (
+            <button 
+              className={`btn-icon ${isRefreshing ? 'spinning' : ''}`} 
+              onClick={() => refreshAll(true)}
+              title="Refresh connection and package lists"
+            >
+              <RefreshCw size={16} />
+            </button>
+          )}
         </div>
       </header>
 
@@ -350,7 +452,11 @@ export default function Home() {
               <h2>{alertInfo.title}</h2>
               <p>{alertInfo.message}</p>
               <div className="alert-actions">
-                <button className="btn btn-primary" onClick={() => refreshAll(true)}>Scan for Devices</button>
+                {webUsbSupported ? (
+                  <button className="btn btn-primary" onClick={handleConnectClick}>Connect Device</button>
+                ) : (
+                  <p style={{ color: '#ef4444', fontWeight: 'bold' }}>WebUSB is not supported in this browser.</p>
+                )}
               </div>
             </div>
           </section>
@@ -494,68 +600,84 @@ export default function Home() {
             </div>
             <p>You have selected <strong>{selectedPackages.size}</strong> package(s) for removal:</p>
             <div className="confirm-packages-list">
-              {Array.from(selectedPackages).map(pkg => (
-                <div key={pkg} className="confirm-pkg-item">{pkg}</div>
+              {Array.from(selectedPackages).map((pkg) => (
+                <div key={pkg} className="confirm-pkg-item">
+                  <strong>{getFriendlyName(pkg)}</strong> ({pkg})
+                </div>
               ))}
             </div>
           </div>
           <div className="modal-footer">
             <button className="btn btn-secondary" onClick={() => setIsConfirmOpen(false)}>Cancel</button>
-            <button className="btn btn-danger" onClick={startUninstallation}>Yes, Uninstall</button>
+            <button className="btn btn-danger" onClick={startUninstallation} style={{ background: '#ef4444', color: 'white', marginLeft: '12px' }}>
+              Confirm & Uninstall
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Progress modal */}
-      <div className={`modal-overlay progress-overlay ${isProgressOpen ? 'visible' : ''}`}>
-        <div className="modal-card progress-card">
+      {/* Progress & Log Modal */}
+      <div className={`modal-overlay ${isProgressOpen ? 'visible' : ''}`}>
+        <div className="modal-card" style={{ maxWidth: '600px' }}>
           <div className="modal-header">
             <h2>{progressTitle}</h2>
           </div>
           <div className="modal-body">
+            
             <div className="progress-meter-container">
-              <div className="progress-ring-wrapper">
-                <svg className="progress-ring" width="120" height="120">
-                  <circle className="progress-ring-circle-bg" stroke="rgba(0,0,0,0.05)" strokeWidth="8" fill="transparent" r="50" cx="60" cy="60"/>
-                  <circle 
-                    className="progress-ring-circle" 
-                    stroke="var(--accent-green)" 
-                    strokeWidth="8" 
-                    strokeDasharray={circumference} 
-                    strokeDashoffset={strokeDashoffset} 
-                    strokeLinecap="round" 
-                    fill="transparent" 
-                    r="50" 
-                    cx="60" 
-                    cy="60"
-                  />
-                </svg>
-                <div className="progress-percentage-text">{progressPercent}%</div>
-              </div>
+              <svg className="progress-ring" width="120" height="120">
+                <circle
+                  className="progress-ring-bg"
+                  stroke="#e5e7eb"
+                  strokeWidth="8"
+                  fill="transparent"
+                  r={radius}
+                  cx="60"
+                  cy="60"
+                />
+                <circle
+                  className="progress-ring-bar"
+                  stroke="#10b981"
+                  strokeWidth="8"
+                  fill="transparent"
+                  r={radius}
+                  cx="60"
+                  cy="60"
+                  strokeDasharray={circumference}
+                  strokeDashoffset={strokeDashoffset}
+                  strokeLinecap="round"
+                />
+              </svg>
+              <div className="progress-percent-label">{progressPercent}%</div>
             </div>
 
             <div className="progress-status-container">
-              <div className="status-detail-text">{progressStatus}</div>
-              <div className="progress-numbers">
-                <span className="stat-success">{successCount} Succeeded</span>
-                <span className="stat-separator">•</span>
-                <span className="stat-fail">{failCount} Failed</span>
+              <div className="progress-status">{progressStatus}</div>
+              <div className="progress-stats-summary">
+                <span className="stat-success">✓ {successCount} Succeeded</span>
+                <span className="stat-separator">|</span>
+                <span className="stat-fail">✗ {failCount} Failed</span>
               </div>
             </div>
 
-            <div className="console-log-header">Execution Log</div>
-            <div ref={consoleLogRef} className="console-log">
+            <div className="console-log" ref={consoleLogRef}>
               {consoleLog.map((log, index) => (
                 <div key={index} className={`console-line ${log.type}`}>
                   {log.text}
                 </div>
               ))}
             </div>
+
           </div>
           <div className="modal-footer">
-            {isProgressDone && (
-              <button className="btn btn-primary" onClick={handleProgressDone}>Done</button>
-            )}
+            <button 
+              className="btn btn-primary" 
+              onClick={handleProgressDone} 
+              disabled={!isProgressDone}
+              style={{ opacity: isProgressDone ? 1 : 0.5, cursor: isProgressDone ? 'pointer' : 'not-allowed' }}
+            >
+              Close
+            </button>
           </div>
         </div>
       </div>
