@@ -224,7 +224,15 @@ export default function Home() {
       await loadPackages(adb);
     } catch (e) {
       console.error('Connection failed', e);
-      showConnectionError('Authentication Failed', e.message || 'Make sure USB debugging is enabled and you accept the RSA authentication prompt on the device screen.');
+      let errMsg = e.message || 'Make sure USB debugging is enabled and you accept the RSA authentication prompt on the device screen.';
+      let errTitle = 'Authentication Failed';
+      
+      if (e.message && (e.message.toLowerCase().includes('already in use') || e.message.toLowerCase().includes('claiminterface') || e.name === 'NetworkError')) {
+        errTitle = 'Device Already in Use';
+        errMsg = 'The device USB port is currently claimed by another program (such as the local adb.exe server running on your PC, Android Studio, or another browser tab). Please open your Terminal/Command Prompt, run "adb kill-server" to release the port, unplug and replug your USB cable, and click Connect Device again.';
+      }
+      
+      showConnectionError(errTitle, errMsg);
     }
   };
 
