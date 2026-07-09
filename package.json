@@ -1,47 +1,23 @@
 {
   "name": "@duyxyz/saca",
-  "version": "1.0.9",
-  "description": "Interactive CLI tool to list and uninstall Android apps via ADB",
+  "version": "1.1.0",
+  "description": "Interactive Web app to list and uninstall Android apps via ADB",
   "type": "module",
-  "bin": {
-    "saca": "bin/cli.js"
-  },
-  "files": [
-    "bin/",
-    "lib/",
-    "README.md",
-    "LICENSE",
-    "adb.exe",
-    "AdbWinApi.dll",
-    "AdbWinUsbApi.dll"
-  ],
   "scripts": {
-    "start": "node bin/cli.js",
-    "bundle": "esbuild bin/cli.js --bundle --platform=node --target=node18 --outfile=dist/saca.cjs --format=cjs",
-    "package": "pkg dist/saca.cjs --targets node18-win-x64,node18-macos-x64,node18-linux-x64 --out-path dist",
-    "build": "npm run bundle && npm run package"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
   },
-  "keywords": [
-    "adb",
-    "android",
-    "uninstall",
-    "cli",
-    "debloat"
-  ],
-  "author": "",
-  "license": "MIT",
   "dependencies": {
-    "@inquirer/checkbox": "^4.0.2",
-    "@inquirer/confirm": "^5.1.6",
-    "blessed": "^0.1.81",
-    "boxen": "^8.0.1",
-    "chalk": "^5.4.1",
-    "gradient-string": "^3.0.0",
-    "ora": "^8.2.0"
+    "lucide-react": "^1.23.0",
+    "next": "16.2.10",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
   },
   "devDependencies": {
-    "esbuild": "^0.20.2",
-    "pkg": "^5.8.1"
+    "eslint": "^9",
+    "eslint-config-next": "16.2.10"
   },
   "engines": {
     "node": ">=18.0.0"
