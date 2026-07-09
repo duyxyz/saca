@@ -421,7 +421,7 @@ body {
 
 .modal-card {
   background: white;
-  border-radius: 0;
+  border-radius: 8px;
   border: 1px solid #d1d5db;
   padding: 24px;
   max-width: 520px;
@@ -438,7 +438,24 @@ body {
 
 .modal-footer { margin-top: 16px; margin-bottom: 0; justify-content: flex-end; gap: 10px; }
 
-.modal-close { background: none; border: none; font-size: 24px; cursor: pointer; }
+.modal-close {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.modal-close:hover {
+  background-color: rgba(0, 0, 0, 0.06);
+  color: #1f2937;
+}
 
 .warning-banner {
   background: #fffbeb;
@@ -608,12 +625,12 @@ body {
   margin: 0;
 }
 
-/* Sharp column headers badge */
+/* Rounded column headers badge */
 .badge {
   background: #e5e7eb;
   color: #374151;
-  padding: 1px 6px;
-  border-radius: 0;
+  padding: 1px 7px;
+  border-radius: 999px;
   font-size: 11px;
   font-weight: 600;
   margin-left: 6px;
