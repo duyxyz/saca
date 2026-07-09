@@ -384,10 +384,7 @@ export default function Home() {
     setSelectedPackages(new Set());
   };
 
-  // Circular progress ring parameters
-  const radius = 50;
-  const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (progressPercent / 100) * circumference;
+
 
   return (
     <div className="app-container">
@@ -620,31 +617,9 @@ export default function Home() {
           </div>
           <div className="modal-body">
             
-            <div className="progress-meter-container">
-              <svg className="progress-ring" width="120" height="120">
-                <circle
-                  className="progress-ring-bg"
-                  stroke="#e5e7eb"
-                  strokeWidth="8"
-                  fill="transparent"
-                  r={radius}
-                  cx="60"
-                  cy="60"
-                />
-                <circle
-                  className="progress-ring-bar"
-                  stroke="#10b981"
-                  strokeWidth="8"
-                  fill="transparent"
-                  r={radius}
-                  cx="60"
-                  cy="60"
-                  strokeDasharray={circumference}
-                  strokeDashoffset={strokeDashoffset}
-                  strokeLinecap="round"
-                />
-              </svg>
-              <div className="progress-percent-label">{progressPercent}%</div>
+            <div className="progress-bar-container">
+              <div className="progress-bar-fill" style={{ width: `${progressPercent}%` }}></div>
+              <div className="progress-bar-text">{progressPercent}%</div>
             </div>
 
             <div className="progress-status-container">
