@@ -698,10 +698,7 @@ body {
   align-items: center;
   justify-content: center;
   padding: 40px 20px;
-}
-
-.loading-pane > * {
-  transform: translateY(-6vh);
+  padding-bottom: 12vh;
 }
 
 .loading-pane p {
