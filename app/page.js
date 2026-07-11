@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { RefreshCw, Search, X, AlertTriangle, ShieldAlert, Trash2, SquareMinus } from 'lucide-react';
+import { RefreshCw, Search, X, AlertTriangle, ShieldAlert, Trash2, SquareMinus, Download } from 'lucide-react';
 
 export default function Home() {
   const [device, setDevice] = useState(null);
@@ -384,6 +384,43 @@ export default function Home() {
     setSelectedPackages(new Set());
   };
 
+  const exportPackagesJson = () => {
+    if (!device) return;
+    
+    const data = {
+      device: {
+        brand: device.brand,
+        model: device.model,
+        androidVersion: device.androidVersion,
+        serial: device.serial,
+      },
+      exportedAt: new Date().toISOString(),
+      packages: {
+        system: packages.system,
+        user: packages.user,
+        totalCount: packages.system.length + packages.user.length
+      }
+    };
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.href = url;
+    
+    const fileName = `${device.brand || 'Android'}_${device.model || 'Device'}_packages.json`
+      .replace(/\s+/g, '_')
+      .toLowerCase();
+      
+    downloadAnchor.download = fileName;
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    
+    document.body.removeChild(downloadAnchor);
+    URL.revokeObjectURL(url);
+  };
+
+
 
 
   return (
@@ -399,6 +436,7 @@ export default function Home() {
             <span className="pulse-dot"></span>
             <span className="status-text">{device ? 'Connected' : 'No Device'}</span>
           </div>
+          {device && <span className="separator">|</span>}
           {device && (
             <div className="device-details">
               <span className="device-name">{`${device.brand || ''} ${device.model || ''}`.trim() || 'Unknown'}</span>
@@ -407,6 +445,16 @@ export default function Home() {
               <span className="separator">|</span>
               <span className="device-serial">{device.serial}</span>
             </div>
+          )}
+          {device && <span className="separator">|</span>}
+          {device && (
+            <button 
+              className="btn-icon" 
+              onClick={exportPackagesJson}
+              title="Export package list to JSON"
+            >
+              <Download size={16} />
+            </button>
           )}
           {device && (
             <button 
@@ -558,6 +606,7 @@ export default function Home() {
           {selectedPackages.size > 0 && (
             <div className="header-selection-bar">
               <span className="selection-count"><strong>{selectedPackages.size}</strong> selected</span>
+              <span className="separator">|</span>
               <button className="btn-icon" onClick={handleDeselectAll} title="Deselect All">
                 <SquareMinus size={18} />
               </button>

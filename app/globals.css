@@ -79,7 +79,7 @@ body {
 .device-panel {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 8px;
   background: transparent;
   padding: 0;
   font-size: 13px;
@@ -89,6 +89,14 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+.header-divider {
+  width: 1px;
+  height: 18px;
+  background: #d1d5db;
+  flex-shrink: 0;
+  margin: 0 4px;
 }
 
 .device-details {
