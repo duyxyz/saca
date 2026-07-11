@@ -321,6 +321,11 @@ body {
   border-bottom: none;
 }
 
+/* Remove bottom border from both cards in the last row of the 2-column system grid */
+.system-column .package-card:nth-last-child(-n+2) {
+  border-bottom: none;
+}
+
 /* Zebra striping */
 .package-card:nth-child(even) {
   background-color: #ffffff;
