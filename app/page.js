@@ -391,7 +391,7 @@ export default function Home() {
       {/* Header */}
       <header className="main-header">
         <div className="logo-container">
-          <h1 className="logo-text">SACA</h1>
+          <h1 className="logo-text">System Adb Cleaner Assistant</h1>
         </div>
 
         <div className={`device-panel ${device ? 'connected' : 'disconnected'}`}>
@@ -399,7 +399,7 @@ export default function Home() {
             <span className="pulse-dot"></span>
             <span className="status-text">{device ? 'Connected' : 'No Device'}</span>
           </div>
-          {device ? (
+          {device && (
             <div className="device-details">
               <span className="device-name">{`${device.brand || ''} ${device.model || ''}`.trim() || 'Unknown'}</span>
               <span className="separator">|</span>
@@ -407,12 +407,6 @@ export default function Home() {
               <span className="separator">|</span>
               <span className="device-serial">{device.serial}</span>
             </div>
-          ) : (
-            webUsbSupported && (
-              <button className="btn btn-primary" onClick={handleConnectClick} style={{ marginLeft: '12px', padding: '4px 10px', fontSize: '12px' }}>
-                Connect Device
-              </button>
-            )
           )}
           {device && (
             <button 

@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400..700&display=swap');
+
 *, *::before, *::after {
   box-sizing: border-box;
 }
@@ -59,8 +61,12 @@ body {
 }
 
 .logo-text {
-  font-size: 24px;
-  margin: 0;
+  font-family: 'Dancing Script', cursive;
+  font-size: 28px;
+  font-weight: 700;
+  margin: -6px 0;
+  line-height: 1.4;
+  padding: 4px 0;
 }
 
 .logo-badge {
@@ -198,7 +204,7 @@ body {
   flex-direction: column;
   min-width: 0;
   background: #fff;
-  border-radius: 12px;
+  border-radius: 6px;
   padding: 16px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.03);
   overflow: hidden;
@@ -635,4 +641,66 @@ body {
   font-weight: 600;
   margin-left: 6px;
 }
+
+/* Alert Pane and Card Layout (Connect Device Screen) */
+.alert-pane {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+}
+
+.alert-card {
+  max-width: 480px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transform: translateY(-6vh);
+}
+
+.alert-card h2 {
+  font-size: 20px;
+  font-weight: 600;
+  margin-top: 16px;
+  margin-bottom: 12px;
+  color: #1f2937;
+}
+
+.alert-card p {
+  font-size: 14px;
+  color: #4b5563;
+  line-height: 1.6;
+  margin: 0 0 24px 0;
+}
+
+.alert-actions {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+/* Loading Pane centering */
+.loading-pane {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+}
+
+.loading-pane > * {
+  transform: translateY(-6vh);
+}
+
+.loading-pane p {
+  font-size: 14px;
+  color: #4b5563;
+  margin-top: 16px;
+  font-weight: 500;
+}
+
 
