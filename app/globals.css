@@ -254,7 +254,7 @@ body {
   flex-direction: column;
   gap: 0;
   padding-right: 0;
-  padding-bottom: 20px;
+  padding-bottom: 0;
   border: 1px solid #d1d5db;
   border-radius: 0;
   background: #ffffff;
